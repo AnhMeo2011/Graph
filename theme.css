@@ -1,0 +1,103 @@
+:root[data-theme="light"] {
+  --text: #0d091b;
+  --background: #e5e1ef;
+  --primary: #cac4de;
+  --secondary: #b5a7d2;
+  --accent: #3709a5;
+}
+:root[data-theme="dark"] {
+  --text: #e8e4f6;
+  --background: #14101e;
+  --primary: #26203a;
+  --secondary: #3a2d57;
+  --accent: #895af6;
+}
+
+
+button {
+    background-color: var(--primary);
+    color: white;
+    padding: 10px 24px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 400;
+    transition: all 0.2s;
+    
+}
+
+button:hover {
+    background-color: var(--accent);
+    transform: translateY(-3px);
+}
+button.small-btn:active {
+    transform: translateY(-1px); /* Hơi lún xuống một chút khi click */
+}
+
+body {
+    background-color: var(--background);
+    color: var(--text);
+}
+
+input:is([type="text"], [type="password"], [type="email"], [type="tel"]),
+textarea {
+  background-color: var(--background);
+  color: var(--text);
+  padding: 10px;
+
+
+  border-radius: 5px;
+  border: 1px solid var(--secondary);
+  transition: outline-width 0.2s ease, box-shadow 0.2s ease;
+
+
+  width: 100%;
+}
+
+input:is([type="text"], [type="password"], [type="email"], [type="tel"]):focus,
+textarea:focus {
+  box-shadow: 0 0 5px var(--accent);
+  
+  border-color: var(--primary);
+  outline: none;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.form-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+a {
+    text-decoration: none; /* Bỏ gạch chân mặc định */
+    color: var(--text);
+    position: relative;    /* Cần thiết để định vị thanh gạch chân */
+    padding-bottom: 2px;
+}
+
+a::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: 0;
+  left: 50%;             /* Bắt đầu từ giữa */
+  background-color: var(--accent);
+  transition: all 0.2s ease;
+  transform: translateX(-50%);
+}
+
+/* Khi di chuột vào: kéo giãn thanh gạch chân ra 100% */
+a:hover::after {
+  width: 100%;
+}

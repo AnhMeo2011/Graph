@@ -1,46 +1,48 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="theme.css">
 </head>
 
-<body style="font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
+<body
+    style="font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
     <div style="width: 33%">
         <h1 style="text-align: center;">Register</h1>
-        <form action="" onsubmit="return save()">
-            <input placeholder="Username" type="text" id="username"
-                style="border:1px solid gray; border-radius: 6px; color:black;padding: 10px; width: 100%">
-            <br>
-            <input type="email" placeholder="Email" id="email"
-                style="border:1px solid gray; border-radius: 6px; color:black;padding: 10px; width: 100%">
-            <br><br>
-            <input type="password" placeholder="Password" id="password"
-                style="border:1px solid gray; border-radius: 6px; color:black;padding: 10px; width: 100%">
-            <br><br>
-            <button
-                style="border:1px solid gray; border-radius: 6px; color:white;padding: 10px;background-color: rgb(238, 75, 43)"
-                type="submit">Sign up</button>
-            <a href="login.html">Already a user?</a>
+        <form action="" onsubmit="save(e)">
+            <input placeholder="Username" type="text" id="username">
+            <input type="email" placeholder="Email" id="email">
+            <input type="password" placeholder="Password" id="password">
+            <div class="form-footer">
+                <a href="login.html">Already a user?</a>
+                <button type="submit">Sign up</button>
+            </div>
         </form>
     </div>
 
     <script>
-        function save() {
+        function save(e) {
+            e.preventDefault()
             let email = document.getElementById("email").value.trim()
             let username = document.getElementById("username").value.trim()
             let password = document.getElementById("password").value.trim()
 
-            if (username.length < 6 || username.length > 18) {
-                alert("Username must be between 6 and 18 characters")
-                return false
+            if (!email || !username || !password) {
+                alert("Fill in the blanks")
+                return
             }
 
-            if (password.length < 8 || password.length > 20) {
-                alert("Password must be between 8 and 20 characters")
-                return false
+            if (username.length < 6 || username.length > 18) {
+                alert("Username must be between 6 and 18 characters")
+                return
+            }
+
+            if (!is_acceptable(password)) {
+                alert("Password must has more than 8 characters, contain at least 1 lowercase letter,uppercase letter, and number")
+                return
             }
 
             let temp = localStorage.getItem("Accounts") || "[]"
@@ -53,6 +55,16 @@
             localStorage.setItem("Accounts", JSON.stringify(data))
 
             alert("Registration successful!")
+            location.href = "homepage.html"
+        }
+        function is_acceptable(password) {
+            let lowercase = /[a-z]/g
+            let uppercase = /[A-Z]/g
+            let numbers = /[0-9]/g
+            if (password.length < 8) return false
+            if (!password.match(lowercase)) return false
+            if (!password.match(uppercase)) return false
+            if (!password.match(numbers)) return false
             return true
         }
     </script>

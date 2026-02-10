@@ -1,0 +1,437 @@
+────────────────────────────────────────
+PURPOSE OF THIS TRAINING (TRIGONOMETRY)
+────────────────────────────────────────
+
+The AI receives a natural-language description of a trigonometric function or expression and must output the correct symbolic trigonometric expression.
+
+The AI must:
+• Identify trigonometric functions
+• Correctly map verbal phrasing to sin, cos, tan, etc.
+• Preserve angles, variables, constants, and grouping
+• Handle common trig modifiers (amplitude, frequency, shifts)
+• Respect parentheses and order of operations
+
+The AI must NOT:
+• Simplify trig expressions unless explicitly asked
+• Apply identities automatically
+• Convert between degrees and radians unless stated
+• Explain reasoning
+• Infer missing parameters
+
+────────────────────────────────────────
+SUPPORTED TRIG FUNCTIONS
+────────────────────────────────────────
+
+The AI should recognize and translate the following functions:
+
+• sine → sin
+• cosine → cos
+• tangent → tan
+• cosecant → csc
+• secant → sec
+• cotangent → cot
+
+Inverse trig (only if explicitly stated):
+• arcsine → arcsin or sin⁻¹
+• arccosine → arccos or cos⁻¹
+• arctangent → arctan or tan⁻¹
+
+────────────────────────────────────────
+ANGLE VARIABLES AND DEFAULTS
+────────────────────────────────────────
+
+If an angle variable is not specified, assume x.
+
+Examples:
+“the sine of an angle” → sin(x)
+“cosine of a number” → cos(x)
+“tan of the input value” → tan(x)
+
+If a variable is named, preserve it exactly.
+
+Examples:
+“the sine of θ” → sin(θ)
+“cosine of t” → cos(t)
+
+────────────────────────────────────────
+BASIC TRIG TRANSLATIONS
+────────────────────────────────────────
+
+Examples:
+
+Description:
+“the sine of x”
+Expression:
+sin(x)
+
+Description:
+“cosine x”
+Expression:
+cos(x)
+
+Description:
+“tangent of the angle t”
+Expression:
+tan(t)
+
+Description:
+“the cosine of x squared”
+Expression:
+cos(x^2)
+
+Description:
+“the square of sine x”
+Expression:
+(sin(x))^2
+
+IMPORTANT:
+Distinguish between:
+• sin(x^2)
+• (sin(x))^2
+
+Wording usually determines grouping.
+
+────────────────────────────────────────
+MULTIPLICATION AND COEFFICIENTS
+────────────────────────────────────────
+
+Examples:
+
+Description:
+“three times sine x”
+Expression:
+3sin(x)
+
+Description:
+“the sine of three x”
+Expression:
+sin(3x)
+
+Description:
+“five cosine of the sum of x and 1”
+Expression:
+5cos(x + 1)
+
+Description:
+“cosine multiplied by x”
+Expression:
+x·cos(x)
+
+────────────────────────────────────────
+ADDITION AND SUBTRACTION
+────────────────────────────────────────
+
+Examples:
+
+Description:
+“sine x plus cosine x”
+Expression:
+sin(x) + cos(x)
+
+Description:
+“the difference between cosine x and sine x”
+Expression:
+cos(x) − sin(x)
+
+Description:
+“sine x minus three”
+Expression:
+sin(x) − 3
+
+Description:
+“three more than cosine x”
+Expression:
+cos(x) + 3
+
+────────────────────────────────────────
+GROUPING AND PARENTHESES
+────────────────────────────────────────
+
+Grouping phrases imply parentheses:
+
+• the sum of
+• the difference of
+• the quantity
+• the product of
+
+Examples:
+
+Description:
+“the sine of the sum of x and y”
+Expression:
+sin(x + y)
+
+Description:
+“the cosine of the difference between x and 2”
+Expression:
+cos(x − 2)
+
+Description:
+“the tangent of the quantity x squared minus 1”
+Expression:
+tan(x^2 − 1)
+
+────────────────────────────────────────
+TRIG FUNCTIONS WITH POWERS
+────────────────────────────────────────
+
+Examples:
+
+Description:
+“sine squared x”
+Expression:
+(sin(x))^2
+
+Description:
+“cosine cubed of x”
+Expression:
+(cos(x))^3
+
+Description:
+“the square of the cosine of 2x”
+Expression:
+(cos(2x))^2
+
+────────────────────────────────────────
+RECIPROCAL TRIG FUNCTIONS
+────────────────────────────────────────
+
+Examples:
+
+Description:
+“the secant of x”
+Expression:
+sec(x)
+
+Description:
+“the cosecant of the angle t”
+Expression:
+csc(t)
+
+Description:
+“cotangent of x plus 1”
+Expression:
+cot(x + 1)
+
+Do NOT rewrite these as reciprocals unless explicitly stated.
+
+────────────────────────────────────────
+INVERSE TRIG FUNCTIONS
+────────────────────────────────────────
+
+Only translate inverse trig if clearly stated.
+
+Examples:
+
+Description:
+“the inverse sine of x”
+Expression:
+arcsin(x)
+
+Description:
+“arctangent of y”
+Expression:
+arctan(y)
+
+Description:
+“cosine inverse of x”
+Expression:
+arccos(x)
+
+Avoid ambiguity. If unclear, preserve stated wording exactly.
+
+────────────────────────────────────────
+AMPLITUDE AND FREQUENCY LANGUAGE
+────────────────────────────────────────
+
+Examples:
+
+Description:
+“a sine function with amplitude 3”
+Expression:
+3sin(x)
+
+Description:
+“cosine with frequency 2”
+Expression:
+cos(2x)
+
+Description:
+“five times sine of 2x”
+Expression:
+5sin(2x)
+
+────────────────────────────────────────
+PHASE SHIFTS AND TRANSLATIONS
+────────────────────────────────────────
+
+Examples:
+
+Description:
+“sine of x plus 3”
+Expression:
+sin(x + 3)
+
+Description:
+“cosine of x minus pi”
+Expression:
+cos(x − π)
+
+Description:
+“tangent of the quantity x minus 4”
+Expression:
+tan(x − 4)
+
+Do not convert verbal shifts into simplified forms.
+
+────────────────────────────────────────
+VERTICAL SHIFTS
+────────────────────────────────────────
+
+Examples:
+
+Description:
+“sine x plus 2”
+Expression:
+sin(x) + 2
+
+Description:
+“cosine x decreased by 5”
+Expression:
+cos(x) − 5
+
+────────────────────────────────────────
+COMPOSITE EXPRESSIONS
+────────────────────────────────────────
+
+Examples:
+
+Description:
+“the sum of sine x and cosine of 2x”
+Expression:
+sin(x) + cos(2x)
+
+Description:
+“three times sine x minus two times cosine x”
+Expression:
+3sin(x) − 2cos(x)
+
+Description:
+“the product of sine x and cosine x”
+Expression:
+sin(x)cos(x)
+
+────────────────────────────────────────
+FRACTIONS AND RATIOS WITH TRIG
+────────────────────────────────────────
+
+Examples:
+
+Description:
+“sine x divided by cosine x”
+Expression:
+sin(x) / cos(x)
+
+Description:
+“the ratio of cosine x to sine x”
+Expression:
+cos(x) / sin(x)
+
+Description:
+“one over tangent x”
+Expression:
+1 / tan(x)
+
+────────────────────────────────────────
+COMMON LANGUAGE PITFALLS
+────────────────────────────────────────
+
+Pay careful attention to wording:
+
+“sine of x squared” → sin(x^2)
+“square of sine x” → (sin(x))^2
+
+“cosine of 2x” → cos(2x)
+“two cosine x” → 2cos(x)
+
+Order and grouping matter.
+
+────────────────────────────────────────
+FUNCTION NOTATION
+────────────────────────────────────────
+
+Examples:
+
+Description:
+“define f of x as sine x”
+Expression:
+f(x) = sin(x)
+
+Description:
+“g of t equals cosine of t minus 1”
+Expression:
+g(t) = cos(t) − 1
+
+────────────────────────────────────────
+WHAT NOT TO DO (TRIG)
+────────────────────────────────────────
+
+Do not:
+• Apply identities (e.g., sin²x + cos²x = 1)
+• Simplify fractions
+• Convert tan to sin/cos
+• Assume radians or degrees unless stated
+• Add domain restrictions
+
+Example:
+Input: “sine x divided by cosine x”
+Correct: sin(x)/cos(x)
+Incorrect: tan(x)
+
+────────────────────────────────────────
+TRAINING PAIR EXAMPLES
+────────────────────────────────────────
+
+Description:
+“The sine of the sum of x and pi”
+Expression:
+sin(x + π)
+
+Description:
+“Three times cosine squared of x”
+Expression:
+3(cos(x))^2
+
+Description:
+“Tangent of x minus one”
+Expression:
+tan(x − 1)
+
+Description:
+“The product of sine x and cosine of 2x”
+Expression:
+sin(x)cos(2x)
+
+Description:
+“One half times sine of 3x”
+Expression:
+(1/2)sin(3x)
+
+────────────────────────────────────────
+EXPECTED OUTPUT FORMAT
+────────────────────────────────────────
+
+• Output only the expression
+• Use standard trig notation
+• No explanation
+• No extra symbols or text
+
+Correct:
+3sin(x + 1)
+
+Incorrect:
+The function is 3sin(x + 1).
+
+────────────────────────────────────────
+END GOAL
+────────────────────────────────────────

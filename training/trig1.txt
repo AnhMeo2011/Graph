@@ -1,0 +1,267 @@
+TRAINING MATERIAL: TRANSLATING TRIGONOMETRIC FUNCTION DESCRIPTIONS INTO FORMAL EXPRESSIONS
+
+Goal of the model
+The AI receives a natural-language description involving trigonometric functions and must output the correct formal mathematical expression. The AI does not need advanced trigonometry or calculus; it only needs to translate descriptions into correct symbolic form.
+
+The focus is on:
+• recognizing trig functions in language
+• interpreting grouping and order of operations
+• translating transformations and combinations
+• producing standardized expressions
+
+SECTION 1 — CORE TRIGONOMETRIC FUNCTIONS
+
+Primary trig functions:
+
+sine → sin(x)
+cosine → cos(x)
+tangent → tan(x)
+
+Reciprocal trig functions:
+
+secant → sec(x)
+cosecant → csc(x)
+cotangent → cot(x)
+
+Examples:
+
+"sine of x" → sin(x)
+"cosine of a number" → cos(x)
+"tangent of twice a number" → tan(2x)
+
+SECTION 2 — BASIC TRANSLATION RULES
+
+    The trig function acts on an input expression.
+    The argument goes inside parentheses.
+
+Example:
+"sine of x plus 3" → sin(x + 3)
+
+    Words indicating grouping require parentheses.
+
+Example:
+"sine of the sum of x and 3" → sin(x + 3)
+
+    Operations outside trig functions apply afterward.
+
+Example:
+"twice the sine of x" → 2 sin(x)
+
+    Respect order of operations.
+
+Example:
+"sine of x squared"
+means sin(x^2), not (sin(x))^2.
+
+SECTION 3 — COMMON LANGUAGE PATTERNS
+
+Direct function use:
+
+sine of x → sin(x)
+cosine of x → cos(x)
+tangent of x → tan(x)
+
+Scaled functions:
+
+three times sine of x → 3 sin(x)
+half the cosine of x → (1/2) cos(x)
+
+Shifted inputs:
+
+sine of x plus two → sin(x + 2)
+cosine of x minus five → cos(x − 5)
+
+Grouped inputs:
+
+tangent of the difference between x and 4 → tan(x − 4)
+
+SECTION 4 — POWERS OF TRIG FUNCTIONS
+
+Two common forms appear in language.
+
+    Function squared:
+
+"sine squared of x"
+→ sin²(x)
+→ equivalent to (sin(x))²
+
+    Square of sine:
+
+"square of sine of x"
+→ (sin(x))²
+
+These usually mean the same thing.
+
+Examples:
+
+cosine squared of x → cos²(x)
+square of tangent of x → tan²(x)
+
+SECTION 5 — OPERATIONS WITH TRIG FUNCTIONS
+
+Addition:
+
+sine of x plus cosine of x
+→ sin(x) + cos(x)
+
+Multiplication:
+
+sine of x times cosine of x
+→ sin(x) cos(x)
+
+Division:
+
+sine of x divided by cosine of x
+→ sin(x) / cos(x)
+
+Example combinations:
+
+three times sine of x plus five
+→ 3 sin(x) + 5
+
+one over cosine of x
+→ 1 / cos(x)
+
+SECTION 6 — INPUT TRANSFORMATIONS
+
+Trig functions often receive transformed inputs.
+
+Horizontal shifts:
+
+sine of x minus 2 → sin(x − 2)
+
+Scaling input:
+
+sine of 3x → sin(3x)
+
+Combined:
+
+cosine of 2x plus 1 → cos(2x + 1)
+
+SECTION 7 — SEQUENTIAL OPERATION DESCRIPTIONS
+
+Language may describe steps.
+
+Example:
+"Take the sine of a number and then square the result."
+→ (sin(x))²
+
+Example:
+"Add three to a number and take the cosine."
+→ cos(x + 3)
+
+Sequence indicators include:
+
+    then
+    after
+    next
+    the result
+
+SECTION 8 — INVERSE TRIG FUNCTIONS (OPTIONAL SUPPORT)
+
+Inverse trig functions appear as:
+
+arcsin(x)
+arccos(x)
+arctan(x)
+
+Language examples:
+
+inverse sine of x → arcsin(x)
+arctangent of a number → arctan(x)
+
+If included, treat them as standard functions.
+
+SECTION 9 — ROOTS AND FRACTIONS WITH TRIG
+
+Examples:
+
+square root of sine of x → √(sin(x))
+
+one divided by sine of x → 1 / sin(x)
+
+square root of cosine squared of x → √(cos²(x))
+
+SECTION 10 — COMMON ERROR CASES
+
+    Misplacing parentheses.
+
+Wrong:
+sin(x) + 3
+
+Correct for:
+"sine of x plus 3"
+→ sin(x + 3)
+
+    Confusing squared input and squared function.
+
+sin(x^2) ≠ (sin(x))^2
+
+    Forgetting grouping words.
+
+"sine of the sum of x and 1"
+requires parentheses:
+sin(x + 1)
+
+SECTION 11 — TRAINING EXAMPLES
+
+Input → Output examples.
+
+sine of x
+→ sin(x)
+
+cosine of x plus three
+→ cos(x + 3)
+
+twice the sine of x
+→ 2 sin(x)
+
+square of cosine of x
+→ cos²(x)
+
+sine of twice a number
+→ sin(2x)
+
+one over tangent of x
+→ 1 / tan(x)
+
+three times sine of x minus four
+→ 3 sin(x) − 4
+
+sine of the square of x
+→ sin(x^2)
+
+square root of cosine of x plus one
+→ √(cos(x + 1))
+
+difference between sine of x and cosine of x
+→ sin(x) − cos(x)
+
+SECTION 12 — NORMALIZATION RULES
+
+Preferred output styles:
+
+sin(x), not sin x
+cos(x), not cos x
+
+Use parentheses when argument is complex.
+
+Prefer:
+sin²(x)
+instead of
+(sin(x))² unless clarity is needed.
+
+SECTION 13 — TRAINING OBJECTIVES
+
+The AI should learn to:
+
+• recognize trig function names
+• correctly group expressions
+• preserve operation order
+• translate sequential instructions
+• distinguish input transformations vs output operations
+• output clean algebraic expressions
+
+Advanced trig identities or calculus are not required.
+
+END OF TRIGONOMETRIC TRAINING MATERIAL

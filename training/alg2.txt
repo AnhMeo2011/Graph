@@ -1,0 +1,300 @@
+────────────────────────────────────────
+PURPOSE OF THIS TRAINING
+────────────────────────────────────────
+
+The AI receives a description of a mathematical function written in natural language and must output the corresponding formal mathematical expression.
+
+Example goal:
+Input description: “A number squared plus three times the number”
+Output expression: x^2 + 3x
+
+The AI should learn to:
+• Identify variables
+• Recognize algebraic operations described in words
+• Respect order of operations
+• Translate verbal structure into symbolic structure
+• Handle common phrasing variations
+• Avoid adding interpretation beyond what is stated
+
+The AI should NOT:
+• Explain steps
+• Simplify unless asked
+• Guess missing information
+• Introduce calculus concepts
+
+────────────────────────────────────────
+GENERAL TRANSLATION RULES
+────────────────────────────────────────
+
+    VARIABLES
+    If a variable is not explicitly named, assume a generic variable such as x.
+
+Examples:
+“a number” → x
+“an input value” → x
+“the variable” → x
+“the number n” → n
+“a value y” → y
+
+If multiple variables are mentioned, preserve them exactly.
+
+Example:
+“the sum of x and y” → x + y
+
+    BASIC OPERATIONS
+    Learn the verbal equivalents of algebraic operations.
+
+Addition phrases:
+• plus
+• added to
+• the sum of
+• increased by
+• more than (note order)
+
+Subtraction phrases:
+• minus
+• subtracted from (order reverses)
+• the difference of
+• decreased by
+• less than (order reverses)
+
+Multiplication phrases:
+• times
+• multiplied by
+• the product of
+• twice / three times / n times
+• of (when used numerically)
+
+Division phrases:
+• divided by
+• over
+• the quotient of
+• ratio of
+
+Exponent phrases:
+• squared
+• cubed
+• raised to the power of
+• to the nth power
+
+    ORDER OF OPERATIONS
+    When verbal grouping implies parentheses, they must be included.
+
+Examples:
+“the sum of x and 3, multiplied by 2” → 2(x + 3)
+“x plus 3 multiplied by 2” → x + 3·2
+
+    FUNCTION LANGUAGE
+    If the description says “a function” or “f of x”, preserve functional notation.
+
+Examples:
+“the function f of x equals twice x plus one” → f(x) = 2x + 1
+“define g of t as t squared minus 4” → g(t) = t^2 − 4
+
+────────────────────────────────────────
+COMMON PHRASES AND THEIR TRANSLATIONS
+────────────────────────────────────────
+
+“a number squared” → x^2
+“a number cubed” → x^3
+“three times a number” → 3x
+“half of a number” → (1/2)x
+“the reciprocal of x” → 1/x
+“x doubled” → 2x
+“x tripled” → 3x
+
+“x increased by 5” → x + 5
+“x decreased by 5” → x − 5
+
+“5 more than x” → x + 5
+“5 less than x” → x − 5
+
+IMPORTANT:
+“less than” and “subtracted from” reverse the order.
+
+Examples:
+“5 subtracted from x” → x − 5
+“x subtracted from 5” → 5 − x
+
+────────────────────────────────────────
+MULTI-STEP EXPRESSIONS
+────────────────────────────────────────
+
+When multiple operations appear, preserve the structure exactly as described.
+
+Examples:
+
+Description:
+“The square of the sum of x and 2”
+Expression:
+(x + 2)^2
+
+Description:
+“Three times the quantity x minus five”
+Expression:
+3(x − 5)
+
+Description:
+“The sum of x squared and five times x”
+Expression:
+x^2 + 5x
+
+Description:
+“The difference between twice x and x squared”
+Expression:
+2x − x^2
+
+────────────────────────────────────────
+FRACTIONS AND RATIOS
+────────────────────────────────────────
+
+Examples:
+
+Description:
+“The quotient of x and 4”
+Expression:
+x / 4
+
+Description:
+“The ratio of x plus 1 to x minus 1”
+Expression:
+(x + 1) / (x − 1)
+
+Description:
+“x divided by the sum of y and 3”
+Expression:
+x / (y + 3)
+
+────────────────────────────────────────
+ABSOLUTE VALUE AND GROUPING
+────────────────────────────────────────
+
+Absolute value phrases:
+• absolute value of
+• magnitude of
+
+Examples:
+“the absolute value of x minus 3” → |x − 3|
+
+Grouping phrases:
+• the quantity
+• the sum of
+• the difference of
+• the product of
+
+These usually imply parentheses.
+
+────────────────────────────────────────
+LINEAR EXPRESSIONS
+────────────────────────────────────────
+
+Examples:
+
+Description:
+“A linear function with slope 3 and intercept −2”
+Expression:
+f(x) = 3x − 2
+
+Description:
+“x multiplied by 4, then increased by 7”
+Expression:
+4x + 7
+
+────────────────────────────────────────
+QUADRATIC EXPRESSIONS
+────────────────────────────────────────
+
+Examples:
+
+Description:
+“x squared minus 4x plus 4”
+Expression:
+x^2 − 4x + 4
+
+Description:
+“A parabola defined by the square of x minus 9”
+Expression:
+x^2 − 9
+
+────────────────────────────────────────
+WORDING VARIATIONS
+────────────────────────────────────────
+
+Different phrasings may describe the same structure.
+
+Examples:
+
+“twice the number plus three”
+“two times a number, plus three”
+“three more than twice a number”
+
+All translate to:
+2x + 3
+
+The AI should focus on meaning, not exact wording.
+
+────────────────────────────────────────
+WHAT NOT TO DO
+────────────────────────────────────────
+
+Do not:
+• Solve equations
+• Simplify unless requested
+• Convert words into explanations
+• Assume missing constants
+• Change variable names
+• Add domain restrictions
+
+Example:
+Input: “x divided by y”
+Correct output: x / y
+Incorrect: x/y where y ≠ 0
+
+────────────────────────────────────────
+TRAINING PAIR EXAMPLES
+────────────────────────────────────────
+
+Description:
+“The square of a number minus seven”
+Expression:
+x^2 − 7
+
+Description:
+“Five times the difference between x and two”
+Expression:
+5(x − 2)
+
+Description:
+“The sum of three numbers x, y, and z”
+Expression:
+x + y + z
+
+Description:
+“The product of x and the sum of y and z”
+Expression:
+x(y + z)
+
+Description:
+“Half of the square of x”
+Expression:
+(1/2)x^2
+
+────────────────────────────────────────
+EXPECTED OUTPUT FORMAT
+────────────────────────────────────────
+
+• Output only the mathematical expression
+• Use standard algebraic symbols
+• No extra text
+• No explanation
+• No formatting markup
+
+Correct:
+3(x + 2)
+
+Incorrect:
+The expression is 3(x + 2).
+
+────────────────────────────────────────
+END GOAL
+────────────────────────────────────────
