@@ -1,15 +1,411 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="theme.css">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Grapher Shell</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <link rel="stylesheet" href="mobile.css" />
+    <style>
+        svg { width: 100vw; height: 100vh; display: block; touch-action: none; }
+        .ui-container { position: absolute; top: 10px; left: 10px; z-index: 10; }
+        /* Minimalist classes for you to style */
+        .axis path, .axis line { stroke: var(--text); }
+        .axis text { fill: var(--text); font-size: 10px; }
+        .grid line { stroke: var(--text);opacity: 0.2 }
+        .line { fill: none; stroke: var(--accent); stroke-width: 2; }
+        .implicit { fill: none; stroke: var(--accent); stroke-width: 1.5; opacity: 0.95; }
+    </style>
 </head>
-
 <body>
-    <script src="script.js"></script>
-</body>
 
+    <div class="ui-container" id="equation-list" style="display:grid;gap:10px">
+        <input style="background-color: var(--primary);" type="text" value="x^2" spellcheck="false" class="equation">
+    </div>
+
+    <svg id="graph" class="background"></svg>
+
+    <script>
+        const svg = d3.select("#graph");
+        const equationList = document.getElementById("equation-list");
+        let width, height, x, y, lineGenerator, zoomBehavior;
+        let currentTransform = d3.zoomIdentity;
+        let scheduled = false;
+        let lastRenderTime = 0;
+        const renderDebounceMs = 80; // throttle renders
+        const compiledCache = new WeakMap(); // not used for strings; use map below
+        const exprCache = new Map();
+
+        function debounceRender() {
+            const now = performance.now();
+            if (scheduled) return;
+            const since = now - lastRenderTime;
+            if (since > renderDebounceMs) {
+                scheduled = true;
+                requestAnimationFrame(() => { scheduled = false; render(); });
+            } else {
+                scheduled = true;
+                setTimeout(() => { scheduled = false; render(); }, renderDebounceMs - since);
+            }
+        }
+
+        function init() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            svg.attr("width", width).attr("height", height);
+            const xDomain = [-10, 10];
+            const xRangeWidth = xDomain[1] - xDomain[0];
+            const aspectRatio = height / width;
+            const yExtent = (xRangeWidth * aspectRatio) / 2;
+            x = d3.scaleLinear().domain(xDomain).range([0, width]);
+            y = d3.scaleLinear().domain([-yExtent, yExtent]).range([height, 0]);
+            zoomBehavior = d3.zoom()
+                .scaleExtent([0.1, 1000])
+                .on("zoom", (event) => {
+                    currentTransform = event.transform;
+                    debounceRender();
+                });
+            svg.call(zoomBehavior);
+            lineGenerator = d3.line()
+                .defined(d => !isNaN(d.valY) && Math.abs(d.valY) < 2000)
+                .curve(d3.curveMonotoneX);
+
+            // ensure existing inputs have listeners and placeholder input exists
+            setupInputs();
+            render();
+        }
+
+        function setupInputs() {
+            const inputs = document.querySelectorAll('.equation');
+            inputs.forEach((input, idx) => {
+                if (!input._hasListener) {
+                    input.addEventListener('input', () => {
+                        // when user types, debounce and ensure an empty input exists at end
+                        ensureTrailingInput();
+                        debounceRender();
+                    });
+                    input._hasListener = true;
+                }
+            });
+            ensureTrailingInput();
+        }
+
+        function ensureTrailingInput() {
+            const inputs = document.querySelectorAll('.equation');
+            const lastInput = inputs[inputs.length - 1];
+            if (!lastInput || lastInput.value.trim() !== "") {
+                const next = document.createElement('input');
+                next.className = 'equation';
+                next.type = 'text';
+                next.placeholder = "Add function...";
+                next.style.backgroundColor = "var(--primary)";
+                next.spellcheck = false;
+                equationList.appendChild(next);
+                // attach listener immediately
+                next.addEventListener('input', () => { ensureTrailingInput(); debounceRender(); });
+                next._hasListener = true;
+            }
+        }
+
+        // bisection root finder for f(x,y) in y for fixed x
+        function findRootInY(f, xVal, yA, yB, maxIter = 30, tol = 1e-6) {
+            let fa = f(xVal, yA);
+            let fb = f(xVal, yB);
+            if (!isFinite(fa) || !isFinite(fb)) return null;
+            if (Math.abs(fa) < tol) return yA;
+            if (Math.abs(fb) < tol) return yB;
+            if (fa * fb > 0) return null;
+            let a = yA, b = yB, c, fc;
+            for (let i = 0; i < maxIter; i++) {
+                c = (a + b) / 2;
+                fc = f(xVal, c);
+                if (!isFinite(fc)) break;
+                if (Math.abs(fc) < tol || (b - a) / 2 < tol) return c;
+                if (fa * fc <= 0) { b = c; fb = fc; } else { a = c; fa = fc; }
+            }
+            return null;
+        }
+
+        // root finder for x when equation has no y (vertical lines)
+        function findRootInX(f, xA, xB, maxIter = 30, tol = 1e-6) {
+            let fa = f(xA);
+            let fb = f(xB);
+            if (!isFinite(fa) || !isFinite(fb)) return null;
+            if (Math.abs(fa) < tol) return xA;
+            if (Math.abs(fb) < tol) return xB;
+            if (fa * fb > 0) return null;
+            let a = xA, b = xB, c, fc;
+            for (let i = 0; i < maxIter; i++) {
+                c = (a + b) / 2;
+                fc = f(c);
+                if (!isFinite(fc)) break;
+                if (Math.abs(fc) < tol || (b - a) / 2 < tol) return c;
+                if (fa * fc <= 0) { b = c; fb = fc; } else { a = c; fa = fc; }
+            }
+            return null;
+        }
+
+        function compileExpressionOnce(exprStr) {
+            if (exprCache.has(exprStr)) return exprCache.get(exprStr);
+            try {
+                const node = math.parse(exprStr);
+                const compiled = node.compile();
+                exprCache.set(exprStr, { node, compiled, ok: true });
+                return exprCache.get(exprStr);
+            } catch (e) {
+                exprCache.set(exprStr, { ok: false, error: e });
+                return exprCache.get(exprStr);
+            }
+        }
+
+        function render() {
+            lastRenderTime = performance.now();
+            const newX = currentTransform.rescaleX(x);
+            const newY = currentTransform.rescaleY(y);
+            svg.selectAll("*").remove();
+            const xTicks = newX.ticks(width / 80);
+            const yTicks = newY.ticks(height / 80);
+            const smartFormat = newX.tickFormat(10, "~g");
+
+            svg.append("g").attr("class", "grid")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(newX).tickValues(xTicks).tickSize(-height).tickFormat(""));
+            svg.append("g").attr("class", "grid")
+                .call(d3.axisLeft(newY).tickValues(yTicks).tickSize(-width).tickFormat(""));
+
+            svg.append("g").attr("class", "axis")
+                .attr("transform", `translate(0,${newY(0)})`)
+                .call(d3.axisBottom(newX).tickValues(xTicks).tickFormat(smartFormat));
+            svg.append("g").attr("class", "axis")
+                .attr("transform", `translate(${newX(0)},0)`)
+                .call(d3.axisLeft(newY).tickValues(yTicks).tickFormat(smartFormat));
+
+            lineGenerator.x(d => newX(d.valX)).y(d => newY(d.valY));
+
+            const inputs = document.querySelectorAll(".equation");
+            inputs.forEach((input) => {
+                if (!input.value.trim()) return;
+                const expressionStr = input.value.trim();
+
+                // quick heuristics to avoid heavy work for trivial cases
+                const hasEq = expressionStr.includes('=');
+                const hasX = /\bx\b/.test(expressionStr);
+                const hasY = /\by\b/.test(expressionStr);
+
+                try {
+                    if (hasEq) {
+                        // split on last '=' to allow '=' in functions if any
+                        const parts = expressionStr.split('=');
+                        const leftStr = parts.slice(0, parts.length - 1).join('=').trim();
+                        const rightStr = parts[parts.length - 1].trim();
+                        const left = compileExpressionOnce(leftStr);
+                        const right = compileExpressionOnce(rightStr);
+                        if (!left.ok || !right.ok) return;
+
+                        if (hasX && hasY) {
+                            // implicit f(x,y) = left - right
+                            const f = (xv, yv) => {
+                                try {
+                                    const lv = left.compiled.evaluate({x: xv, y: yv});
+                                    const rv = right.compiled.evaluate({x: xv, y: yv});
+                                    const v = (typeof lv === 'number' ? lv : NaN) - (typeof rv === 'number' ? rv : NaN);
+                                    return v;
+                                } catch { return NaN; }
+                            };
+
+                            // adaptive sampling: fewer x samples, fewer y samples
+                            const domain = newX.domain();
+                            const yDomain = newY.domain();
+                            const nX = Math.max(120, Math.min(600, Math.floor(width / 2))); // reduce when y present
+                            const nY = 80; // coarse y scan
+                            const xs = d3.range(domain[0], domain[1] + 1e-9, (domain[1] - domain[0]) / (nX - 1));
+                            const ys = d3.range(yDomain[0], yDomain[1] + 1e-9, (yDomain[1] - yDomain[0]) / (nY - 1));
+
+                            // pre-allocate arrays
+                            const rootsPerX = new Array(xs.length);
+                            for (let i = 0; i < xs.length; i++) rootsPerX[i] = [];
+
+                            // scan: for each x, scan y coarse grid for sign changes
+                            for (let i = 0; i < xs.length; i++) {
+                                const xv = xs[i];
+                                let prevY = ys[0];
+                                let prevVal = f(xv, prevY);
+                                for (let j = 1; j < ys.length; j++) {
+                                    const curY = ys[j];
+                                    const curVal = f(xv, curY);
+                                    if (!isFinite(prevVal) || !isFinite(curVal)) { prevY = curY; prevVal = curVal; continue; }
+                                    if (Math.abs(prevVal) < 1e-9) {
+                                        rootsPerX[i].push(prevY);
+                                    }
+                                    if (prevVal * curVal < 0) {
+                                        const root = findRootInY(f, xv, prevY, curY, 25, 1e-5);
+                                        if (root !== null) rootsPerX[i].push(root);
+                                    }
+                                    prevY = curY; prevVal = curVal;
+                                }
+                            }
+
+                            // connect roots across x to polylines (greedy nearest neighbor)
+                            const used = rootsPerX.map(arr => new Array(arr.length).fill(false));
+                            const maxDy = (yDomain[1] - yDomain[0]) / 6; // threshold to connect
+                            for (let i = 0; i < rootsPerX.length; i++) {
+                                for (let j = 0; j < rootsPerX[i].length; j++) {
+                                    if (used[i][j]) continue;
+                                    const poly = [{ valX: xs[i], valY: rootsPerX[i][j] }];
+                                    used[i][j] = true;
+                                    let lastY = rootsPerX[i][j];
+                                    // extend forward
+                                    for (let k = i + 1; k < rootsPerX.length; k++) {
+                                        let bestIdx = -1;
+                                        let bestDist = Infinity;
+                                        for (let m = 0; m < rootsPerX[k].length; m++) {
+                                            if (used[k][m]) continue;
+                                            const dY = Math.abs(rootsPerX[k][m] - lastY);
+                                            if (dY < bestDist) { bestDist = dY; bestIdx = m; }
+                                        }
+                                        if (bestIdx === -1 || bestDist > maxDy) break;
+                                        poly.push({ valX: xs[k], valY: rootsPerX[k][bestIdx] });
+                                        used[k][bestIdx] = true;
+                                        lastY = rootsPerX[k][bestIdx];
+                                    }
+                                    // extend backward
+                                    lastY = rootsPerX[i][j];
+                                    for (let k = i - 1; k >= 0; k--) {
+                                        let bestIdx = -1;
+                                        let bestDist = Infinity;
+                                        for (let m = 0; m < rootsPerX[k].length; m++) {
+                                            if (used[k][m]) continue;
+                                            const dY = Math.abs(rootsPerX[k][m] - lastY);
+                                            if (dY < bestDist) { bestDist = dY; bestIdx = m; }
+                                        }
+                                        if (bestIdx === -1 || bestDist > maxDy) break;
+                                        poly.unshift({ valX: xs[k], valY: rootsPerX[k][bestIdx] });
+                                        used[k][bestIdx] = true;
+                                        lastY = rootsPerX[k][bestIdx];
+                                    }
+
+                                    if (poly.length > 1) {
+                                        svg.append("path").datum(poly).attr("class", "implicit").attr("d", lineGenerator);
+                                    } else {
+                                        svg.append("circle")
+                                           .attr("cx", newX(poly[0].valX))
+                                           .attr("cy", newY(poly[0].valY))
+                                           .attr("r", 1.2)
+                                           .attr("fill", "var(--accent)");
+                                    }
+                                }
+                            }
+                        } else if (hasX && !hasY) {
+                            // vertical lines: solve left(x) - right(x) = 0 for x
+                            const g = (xv) => {
+                                try {
+                                    const lv = left.compiled.evaluate({x: xv});
+                                    const rv = right.compiled.evaluate({x: xv});
+                                    return (typeof lv === 'number' ? lv : NaN) - (typeof rv === 'number' ? rv : NaN);
+                                } catch { return NaN; }
+                            };
+                            const domain = newX.domain();
+                            const n = Math.max(200, Math.min(1200, Math.floor(width)));
+                            const xs = d3.range(domain[0], domain[1] + 1e-9, (domain[1] - domain[0]) / (n - 1));
+                            const roots = [];
+                            let prevX = xs[0], prevVal = g(prevX);
+                            for (let i = 1; i < xs.length; i++) {
+                                const curX = xs[i];
+                                const curVal = g(curX);
+                                if (!isFinite(prevVal) || !isFinite(curVal)) { prevX = curX; prevVal = curVal; continue; }
+                                if (Math.abs(prevVal) < 1e-9) roots.push(prevX);
+                                if (prevVal * curVal < 0) {
+                                    const root = findRootInX(g, prevX, curX, 30, 1e-6);
+                                    if (root !== null) roots.push(root);
+                                }
+                                prevX = curX; prevVal = curVal;
+                            }
+                            // draw vertical lines
+                            roots.forEach(rx => {
+                                svg.append("line")
+                                   .attr("class", "implicit")
+                                   .attr("x1", newX(rx)).attr("x2", newX(rx))
+                                   .attr("y1", 0).attr("y2", height);
+                            });
+                        } else if (!hasX && hasY) {
+                            // horizontal lines: solve left(y) - right(y) = 0 for y
+                            const g = (yv) => {
+                                try {
+                                    const lv = left.compiled.evaluate({y: yv});
+                                    const rv = right.compiled.evaluate({y: yv});
+                                    return (typeof lv === 'number' ? lv : NaN) - (typeof rv === 'number' ? rv : NaN);
+                                } catch { return NaN; }
+                            };
+                            const yDomain = newY.domain();
+                            const n = 400;
+                            const ys = d3.range(yDomain[0], yDomain[1] + 1e-9, (yDomain[1] - yDomain[0]) / (n - 1));
+                            const roots = [];
+                            let prevY = ys[0], prevVal = g(prevY);
+                            for (let i = 1; i < ys.length; i++) {
+                                const curY = ys[i];
+                                const curVal = g(curY);
+                                if (!isFinite(prevVal) || !isFinite(curVal)) { prevY = curY; prevVal = curVal; continue; }
+                                if (Math.abs(prevVal) < 1e-9) roots.push(prevY);
+                                if (prevVal * curVal < 0) {
+                                    const root = findRootInY((xv,yv)=>g(yv), 0, prevY, curY, 30, 1e-6);
+                                    if (root !== null) roots.push(root);
+                                }
+                                prevY = curY; prevVal = curVal;
+                            }
+                            // draw horizontal lines
+                            roots.forEach(ry => {
+                                svg.append("line")
+                                   .attr("class", "implicit")
+                                   .attr("y1", newY(ry)).attr("y2", newY(ry))
+                                   .attr("x1", 0).attr("x2", width);
+                            });
+                        } else {
+                            // constant equation: left-right = 0 -> either whole plane or nothing
+                            const val = left.compiled.evaluate({}) - right.compiled.evaluate({});
+                            if (Math.abs(val) < 1e-9) {
+                                // whole plane true: draw nothing special
+                            } else {
+                                // no solution: nothing to draw
+                            }
+                        }
+                    } else {
+                        // no '=': treat as y = expression(x) (default behavior)
+                        // compile once
+                        const compiledObj = compileExpressionOnce(expressionStr);
+                        if (!compiledObj.ok) return;
+                        // if expression contains y but no x, treat as horizontal function y = f() is rare; fallback to previous
+                        const hasYonly = !/\bx\b/.test(expressionStr) && /\by\b/.test(expressionStr);
+                        const domain = newX.domain();
+                        const nSamples = 1200;
+                        const step = (domain[1] - domain[0]) / (nSamples - 1);
+                        const points = new Array(nSamples);
+                        for (let i = 0; i < nSamples; i++) {
+                            const xv = domain[0] + i * step;
+                            try {
+                                const result = compiledObj.compiled.evaluate({x: xv});
+                                points[i] = { valX: xv, valY: (typeof result === 'number') ? result : NaN };
+                            } catch {
+                                points[i] = { valX: xv, valY: NaN };
+                            }
+                        }
+                        svg.append("path").datum(points).attr("class", "line").attr("d", lineGenerator);
+                    }
+                } catch (err) {
+                    // silent fail to keep UI responsive
+                }
+            });
+        }
+
+        // initial setup: attach listener to container to catch newly added inputs
+        equationList.addEventListener('input', (e) => {
+            setupInputs();
+            debounceRender();
+        });
+
+        window.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+        window.addEventListener('resize', init);
+        init();
+    </script>
+</body>
 </html>

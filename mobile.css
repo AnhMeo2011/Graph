@@ -3,64 +3,65 @@
   --background: #e5e1ef;
   --primary: #cac4de;
   --secondary: #b5a7d2;
-  --accent: #3709a5;
+  --accent: #2a0977;
 }
 
 :root[data-theme="dark"] {
   --text: #e8e4f6;
   --background: #14101e;
   --primary: #26203a;
-  --secondary: #3a2d57;
-  --accent: #895af6;
+  --secondary: #050505;
+  --accent: #a886f6;
 }
 
-.form-card {
-  background-color: #1a1726;
-  /* Slightly lighter than your main background */
-  padding: 2.5rem;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  /* Subtle highlight */
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  /* Deep shadow for lift */
-  width: 100%;
-  max-width: 400px;
-  text-align: center;
-}
-
+/* Base Layout - Keeps card centered on screen */
 body {
   background-color: var(--background);
   color: var(--text);
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
 }
 
-input:is([type="text"], [type="password"], [type="email"], [type="tel"]),
-textarea {
-  background-color: var(--background);
-  color: var(--text);
-  padding: 10px;
-
-
-  border-radius: 5px;
-  border: 1px solid var(--secondary);
-  transition: outline-width 0.2s ease, box-shadow 0.2s ease;
-
-
+.form-card {
+  background-color: var(--primary); /* Note: You might want to use var(--primary) here for light mode support! */
+  padding: 2.5rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   width: 100%;
-}
-
-input:is([type="text"], [type="password"], [type="email"], [type="tel"]):focus,
-textarea:focus, a:focus {
-  box-shadow: 0px 0.5px 1px rgba(0, 0, 0, 0.1), 0px 0px 0px 3.5px var(--accent, transparent 50%);
-  outline: none;
+  min-width: 400px;
+  text-align: center;
+  box-sizing: border-box; /* Ensures padding doesn't break width */
 }
 
 form {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  max-width: 400px;
+  width: 100%;
   margin: 0 auto;
-  padding: 20px;
+}
+
+input:is([type="text"], [type="password"], [type="email"], [type="tel"]),
+textarea {
+  background-color: var(--background);
+  color: var(--text);
+  padding: 12px; /* Increased slightly for better mobile tap area */
+  border-radius: 8px;
+  border: 1px solid var(--secondary);
+  transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Fixed the focus ring syntax */
+input:focus, textarea:focus, a:focus, button:focus {
+  box-shadow: 0px 0.5px 1px rgba(0, 0, 0, 0.1), 0px 0px 0px 3.5px color-mix(in srgb, var(--accent), transparent 50%);
+  outline: none;
 }
 
 .form-footer {
@@ -75,7 +76,7 @@ a {
   color: var(--text);
   position: relative;
   padding-bottom: 2px;
-  border-radius: 6px;
+  font-size: 14px;
 }
 
 a::after {
@@ -96,26 +97,66 @@ a:hover::after {
 
 button {
   display: flex;
-  flex-direction: column;
+  justify-content: center; /* Centering text inside button */
   align-items: center;
-  padding: 6px 14px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
   border-radius: 6px;
   color: var(--text);
   background: var(--secondary);
   border: none;
   box-shadow: 0px 0.5px 1px rgba(0, 0, 0, 0.1);
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: manipulation;
   cursor: pointer;
+  transition: transform 0.1s ease, filter 0.2s ease;
 }
 
-button:focus {
-  box-shadow: 0px 0.5px 1px rgba(0, 0, 0, 0.1), 0px 0px 0px 3.5px var(--accent, transparent 50%);
-  outline: 0;
+button:active {
+  transform: scale(0.98);
 }
 
 .accented {
   background-color: var(--accent);
+}
+
+svg { 
+    width: 100vw; 
+    height: 100vh; 
+    display: block; 
+    touch-action: none; /* Prevents all browser-level touch gestures like zooming */
+}
+/* =========================================
+   MOBILE RESPONSIVENESS
+   ========================================= */
+
+@media (max-width: 480px) {
+  /*.form-card {
+    width: 92%; Gives a little breathing room on the edges
+    padding: 1.5rem;
+    margin: 20px;
+  }*/
+
+  /* Make inputs 16px to prevent iOS auto-zoom */
+  input:is([type="text"], [type="password"], [type="email"], [type="tel"]),
+  textarea {
+    font-size: 16px; 
+    padding: 14px;
+  }
+
+  .form-footer {
+    flex-direction: column; /* Stacks the "Already a user?" and button */
+    gap: 15px;
+    text-align: center;
+  }
+
+  button {
+    width: 100%; /* Makes the button full-width on mobile for easier tapping */
+    padding: 14px;
+  }
+}
+.background {
+  background-color: var(--background);
+}
+.primary {
+  background-color: var(--primary);
 }
