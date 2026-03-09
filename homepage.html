@@ -1,39 +1,97 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Grapher Shell</title>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
     <link rel="stylesheet" href="mobile.css" />
     <style>
-        svg { width: 100vw; height: 100vh; display: block; touch-action: none; }
-        .ui-container { position: absolute; top: 10px; left: 10px; z-index: 10; }
+        svg {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            touch-action: none;
+        }
+
+        .ui-container {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+        }
+
         /* Minimalist classes for you to style */
-        .axis path, .axis line { stroke: var(--text); }
-        .axis text { fill: var(--text); font-size: 10px; }
-        .grid line { stroke: var(--text);opacity: 0.2 }
-        .line { fill: none; stroke: var(--accent); stroke-width: 2; }
-        .implicit { fill: none; stroke: var(--accent); stroke-width: 1.5; opacity: 0.95; }
+        .axis path,
+        .axis line {
+            stroke: var(--text);
+        }
+
+        .axis text {
+            fill: var(--text);
+            font-size: 10px;
+        }
+
+        .grid line {
+            stroke: var(--text);
+            opacity: 0.2
+        }
+
+        .line {
+            fill: none;
+            stroke: var(--accent);
+            stroke-width: 2;
+        }
+
+        .implicit {
+            fill: none;
+            stroke: var(--accent);
+            stroke-width: 5;
+            opacity: 0.95;
+        }
     </style>
 </head>
-<body>
 
-    <div class="ui-container" id="equation-list" style="display:grid;gap:10px">
-        <input style="background-color: var(--primary);" type="text" value="x^2" spellcheck="false" class="equation">
+<body>
+    <div class="ui-container" style="display:grid;gap:10px">
+        <div id="equation-list" style="display:grid;gap:10px">
+            <input style="background-color: var(--primary);" type="text" value="x^2" spellcheck="false" class="equation"
+                id="firstOne">
+        </div>
+        <button id="addEquation">+</button>
     </div>
 
     <svg id="graph" class="background"></svg>
 
+    <script src="integration.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
     <script>
         const svg = d3.select("#graph");
         const equationList = document.getElementById("equation-list");
+        const oldEquationList = localStorage.getItem("equationList");
+        if (oldEquationList && JSON.parse(oldEquationList).length > 0) {
+            document.getElementById("firstOne").remove();
+            const equations = JSON.parse(oldEquationList);
+            equations.forEach(eq => {
+                const input = document.createElement("input");
+                input.type = "text";
+                input.className = "equation";
+                input.value = eq;
+                input.spellcheck = false;
+                input.style.backgroundColor = "var(--primary)";
+                equationList.appendChild(input);
+            });
+            localStorage.removeItem("equationList");
+        } else {
+            localStorage.setItem("equationList", JSON.stringify(["x^2"]));
+            document.getElementById("firstOne").value = "x^2";
+        }
         let width, height, x, y, lineGenerator, zoomBehavior;
         let currentTransform = d3.zoomIdentity;
         let scheduled = false;
         let lastRenderTime = 0;
-        const renderDebounceMs = 80; // throttle renders
+        const renderDebounceMs = 0; // throttle renders
         const compiledCache = new WeakMap(); // not used for strings; use map below
         const exprCache = new Map();
 
@@ -78,17 +136,19 @@
 
         function setupInputs() {
             const inputs = document.querySelectorAll('.equation');
+            const valuesToStore = [];
             inputs.forEach((input, idx) => {
+                valuesToStore.push(input.value);
                 if (!input._hasListener) {
                     input.addEventListener('input', () => {
                         // when user types, debounce and ensure an empty input exists at end
-                        ensureTrailingInput();
                         debounceRender();
                     });
                     input._hasListener = true;
                 }
             });
-            ensureTrailingInput();
+            localStorage.setItem("equationList", JSON.stringify(valuesToStore));
+            //ensureTrailingInput();
         }
 
         function ensureTrailingInput() {
@@ -103,45 +163,50 @@
                 next.spellcheck = false;
                 equationList.appendChild(next);
                 // attach listener immediately
-                next.addEventListener('input', () => { ensureTrailingInput(); debounceRender(); });
+                next.addEventListener('input', () => { debounceRender(); });
                 next._hasListener = true;
             }
         }
+        document.getElementById("addEquation").addEventListener("click", ensureTrailingInput)
 
         // bisection root finder for f(x,y) in y for fixed x
         function findRootInY(f, xVal, yA, yB, maxIter = 30, tol = 1e-6) {
-            let fa = f(xVal, yA);
-            let fb = f(xVal, yB);
-            if (!isFinite(fa) || !isFinite(fb)) return null;
-            if (Math.abs(fa) < tol) return yA;
-            if (Math.abs(fb) < tol) return yB;
-            if (fa * fb > 0) return null;
-            let a = yA, b = yB, c, fc;
-            for (let i = 0; i < maxIter; i++) {
-                c = (a + b) / 2;
-                fc = f(xVal, c);
-                if (!isFinite(fc)) break;
-                if (Math.abs(fc) < tol || (b - a) / 2 < tol) return c;
-                if (fa * fc <= 0) { b = c; fb = fc; } else { a = c; fa = fc; }
+            let y = (yA + yB) / 2; // Initial guess
+            const h = 1e-8; // Bước nhỏ để tính đạo hàm
+
+            for (let i = 0; i < 9000; i++) {
+                const fy = f(xVal, y);
+                if (Math.abs(fy) < tol) return y;
+
+                // Tính đạo hàm số trị (Numerical Derivative)
+                const dfy = (f(xVal, y + h) - fy) / h;
+
+                if (Math.abs(dfy) < 1e-14) break; // Tránh chia cho 0
+
+                const nextY = y - fy / dfy;
+
+                if (Math.abs(nextY - y) < tol) return nextY;
+                y = nextY;
             }
             return null;
         }
 
         // root finder for x when equation has no y (vertical lines)
-        function findRootInX(f, xA, xB, maxIter = 30, tol = 1e-6) {
-            let fa = f(xA);
-            let fb = f(xB);
-            if (!isFinite(fa) || !isFinite(fb)) return null;
-            if (Math.abs(fa) < tol) return xA;
-            if (Math.abs(fb) < tol) return xB;
-            if (fa * fb > 0) return null;
-            let a = xA, b = xB, c, fc;
-            for (let i = 0; i < maxIter; i++) {
-                c = (a + b) / 2;
-                fc = f(c);
-                if (!isFinite(fc)) break;
-                if (Math.abs(fc) < tol || (b - a) / 2 < tol) return c;
-                if (fa * fc <= 0) { b = c; fb = fc; } else { a = c; fa = fc; }
+        function findRootInX(f, xStart, maxIter = 30, tol = 1e-6) {
+            let x = xStart;
+            const h = 1e-8;
+
+            for (let i = 0; i < 9000; i++) {
+                let fx = f(x);
+                if (!isFinite(fx)) return null;
+                if (Math.abs(fx) < tol) return x;
+
+                let dfx = (f(x + h) - fx) / h;
+                if (Math.abs(dfx) < 1e-12) break;
+
+                let nextX = x - fx / dfx;
+                if (Math.abs(nextX - x) < tol) return nextX;
+                x = nextX;
             }
             return null;
         }
@@ -207,8 +272,8 @@
                             // implicit f(x,y) = left - right
                             const f = (xv, yv) => {
                                 try {
-                                    const lv = left.compiled.evaluate({x: xv, y: yv});
-                                    const rv = right.compiled.evaluate({x: xv, y: yv});
+                                    const lv = left.compiled.evaluate({ x: xv, y: yv });
+                                    const rv = right.compiled.evaluate({ x: xv, y: yv });
                                     const v = (typeof lv === 'number' ? lv : NaN) - (typeof rv === 'number' ? rv : NaN);
                                     return v;
                                 } catch { return NaN; }
@@ -239,7 +304,7 @@
                                         rootsPerX[i].push(prevY);
                                     }
                                     if (prevVal * curVal < 0) {
-                                        const root = findRootInY(f, xv, prevY, curY, 25, 1e-5);
+                                        const root = findRootInY(f, xv, prevY, curY, 25, 1e-9);
                                         if (root !== null) rootsPerX[i].push(root);
                                     }
                                     prevY = curY; prevVal = curVal;
@@ -289,10 +354,10 @@
                                         svg.append("path").datum(poly).attr("class", "implicit").attr("d", lineGenerator);
                                     } else {
                                         svg.append("circle")
-                                           .attr("cx", newX(poly[0].valX))
-                                           .attr("cy", newY(poly[0].valY))
-                                           .attr("r", 1.2)
-                                           .attr("fill", "var(--accent)");
+                                            .attr("cx", newX(poly[0].valX))
+                                            .attr("cy", newY(poly[0].valY))
+                                            .attr("r", 1.2)
+                                            .attr("fill", "var(--accent)");
                                     }
                                 }
                             }
@@ -300,8 +365,8 @@
                             // vertical lines: solve left(x) - right(x) = 0 for x
                             const g = (xv) => {
                                 try {
-                                    const lv = left.compiled.evaluate({x: xv});
-                                    const rv = right.compiled.evaluate({x: xv});
+                                    const lv = left.compiled.evaluate({ x: xv });
+                                    const rv = right.compiled.evaluate({ x: xv });
                                     return (typeof lv === 'number' ? lv : NaN) - (typeof rv === 'number' ? rv : NaN);
                                 } catch { return NaN; }
                             };
@@ -316,7 +381,7 @@
                                 if (!isFinite(prevVal) || !isFinite(curVal)) { prevX = curX; prevVal = curVal; continue; }
                                 if (Math.abs(prevVal) < 1e-9) roots.push(prevX);
                                 if (prevVal * curVal < 0) {
-                                    const root = findRootInX(g, prevX, curX, 30, 1e-6);
+                                    const root = findRootInX(g, prevX, curX, 30, 1e-9);
                                     if (root !== null) roots.push(root);
                                 }
                                 prevX = curX; prevVal = curVal;
@@ -324,16 +389,16 @@
                             // draw vertical lines
                             roots.forEach(rx => {
                                 svg.append("line")
-                                   .attr("class", "implicit")
-                                   .attr("x1", newX(rx)).attr("x2", newX(rx))
-                                   .attr("y1", 0).attr("y2", height);
+                                    .attr("class", "implicit")
+                                    .attr("x1", newX(rx)).attr("x2", newX(rx))
+                                    .attr("y1", 0).attr("y2", height);
                             });
                         } else if (!hasX && hasY) {
                             // horizontal lines: solve left(y) - right(y) = 0 for y
                             const g = (yv) => {
                                 try {
-                                    const lv = left.compiled.evaluate({y: yv});
-                                    const rv = right.compiled.evaluate({y: yv});
+                                    const lv = left.compiled.evaluate({ y: yv });
+                                    const rv = right.compiled.evaluate({ y: yv });
                                     return (typeof lv === 'number' ? lv : NaN) - (typeof rv === 'number' ? rv : NaN);
                                 } catch { return NaN; }
                             };
@@ -348,7 +413,7 @@
                                 if (!isFinite(prevVal) || !isFinite(curVal)) { prevY = curY; prevVal = curVal; continue; }
                                 if (Math.abs(prevVal) < 1e-9) roots.push(prevY);
                                 if (prevVal * curVal < 0) {
-                                    const root = findRootInY((xv,yv)=>g(yv), 0, prevY, curY, 30, 1e-6);
+                                    const root = findRootInY((xv, yv) => g(yv), 0, prevY, curY, 30, 1e-6);
                                     if (root !== null) roots.push(root);
                                 }
                                 prevY = curY; prevVal = curVal;
@@ -356,9 +421,9 @@
                             // draw horizontal lines
                             roots.forEach(ry => {
                                 svg.append("line")
-                                   .attr("class", "implicit")
-                                   .attr("y1", newY(ry)).attr("y2", newY(ry))
-                                   .attr("x1", 0).attr("x2", width);
+                                    .attr("class", "implicit")
+                                    .attr("y1", newY(ry)).attr("y2", newY(ry))
+                                    .attr("x1", 0).attr("x2", width);
                             });
                         } else {
                             // constant equation: left-right = 0 -> either whole plane or nothing
@@ -383,7 +448,7 @@
                         for (let i = 0; i < nSamples; i++) {
                             const xv = domain[0] + i * step;
                             try {
-                                const result = compiledObj.compiled.evaluate({x: xv});
+                                const result = compiledObj.compiled.evaluate({ x: xv });
                                 points[i] = { valX: xv, valY: (typeof result === 'number') ? result : NaN };
                             } catch {
                                 points[i] = { valX: xv, valY: NaN };
@@ -408,4 +473,5 @@
         init();
     </script>
 </body>
+
 </html>

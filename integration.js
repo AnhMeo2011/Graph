@@ -11,7 +11,10 @@ export async function Translate(description) {
         systemInstruction: `
 Convert math descriptions into functions.
 Return only the final result.
-Format: f(x) = ...
+Set every letter constant to a number
+Use a normal format (no LaTeX or similar)
+If the function described is explicit: y = ...
+If the function described is implicit, return the function in simplest form
 No explanations.
 Shorten if possible (e.g. 3*x = 3x)
 `,

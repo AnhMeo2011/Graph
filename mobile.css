@@ -2,7 +2,7 @@
   --text: #0d091b;
   --background: #e5e1ef;
   --primary: #cac4de;
-  --secondary: #b5a7d2;
+  --secondary: #9a8dc9;
   --accent: #2a0977;
 }
 
@@ -10,7 +10,7 @@
   --text: #e8e4f6;
   --background: #14101e;
   --primary: #26203a;
-  --secondary: #050505;
+  --secondary: #433672;
   --accent: #a886f6;
 }
 
@@ -54,7 +54,6 @@ textarea {
   border-radius: 8px;
   border: 1px solid var(--secondary);
   transition: all 0.2s ease;
-  width: 100%;
   box-sizing: border-box;
 }
 
@@ -97,9 +96,9 @@ a:hover::after {
 
 button {
   display: flex;
-  justify-content: center; /* Centering text inside button */
+  justify-content: center;
   align-items: center;
-  padding: 10px 20px;
+  padding: 12px 20px;
   font-size: 14px;
   font-weight: 500;
   border-radius: 6px;
@@ -111,9 +110,6 @@ button {
   transition: transform 0.1s ease, filter 0.2s ease;
 }
 
-button:active {
-  transform: scale(0.98);
-}
 
 .accented {
   background-color: var(--accent);
@@ -130,11 +126,12 @@ svg {
    ========================================= */
 
 @media (max-width: 480px) {
-  /*.form-card {
-    width: 92%; Gives a little breathing room on the edges
+  .form-card {
+    /*width: 92%; Gives a little breathing room on the edges
     padding: 1.5rem;
-    margin: 20px;
-  }*/
+    margin: 20px;*/
+    
+  }
 
   /* Make inputs 16px to prevent iOS auto-zoom */
   input:is([type="text"], [type="password"], [type="email"], [type="tel"]),
